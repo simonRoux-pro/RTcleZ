@@ -14,7 +14,137 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      articles: {
+        Row: {
+          category: Database["public"]["Enums"]["article_category"] | null
+          id: string
+          image_url: string | null
+          is_favorite: boolean | null
+          is_read: boolean | null
+          scraped_at: string
+          source_id: string | null
+          source_url: string
+          summary: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          category?: Database["public"]["Enums"]["article_category"] | null
+          id?: string
+          image_url?: string | null
+          is_favorite?: boolean | null
+          is_read?: boolean | null
+          scraped_at?: string
+          source_id?: string | null
+          source_url: string
+          summary?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["article_category"] | null
+          id?: string
+          image_url?: string | null
+          is_favorite?: boolean | null
+          is_read?: boolean | null
+          scraped_at?: string
+          source_id?: string | null
+          source_url?: string
+          summary?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "articles_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      keywords: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          keyword: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          keyword: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          keyword?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      sources: {
+        Row: {
+          category: Database["public"]["Enums"]["article_category"] | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          category?: Database["public"]["Enums"]["article_category"] | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string
+          url: string
+          user_id: string
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["article_category"] | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string
+          url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +153,15 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      article_category:
+        | "tech"
+        | "business"
+        | "science"
+        | "politics"
+        | "health"
+        | "sports"
+        | "entertainment"
+        | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +288,17 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      article_category: [
+        "tech",
+        "business",
+        "science",
+        "politics",
+        "health",
+        "sports",
+        "entertainment",
+        "other",
+      ],
+    },
   },
 } as const
