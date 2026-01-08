@@ -73,32 +73,83 @@ export const useArticles = () => {
     setRefreshing(true);
 
     try {
-      // Fetch active sources
-      const { data: sources, error: sourcesError } = await supabase
+      // Fetch active keywords
+      const { data: keywords } = await supabase
+        .from('keywords')
+        .select('*')
+        .eq('is_active', true);
+
+      // Fetch active sources (optional now)
+      const { data: sources } = await supabase
         .from('sources')
         .select('*')
         .eq('is_active', true);
 
-      if (sourcesError) throw sourcesError;
-      if (!sources || sources.length === 0) {
+      const activeKeywords = (keywords as Keyword[]) || [];
+      const activeSources = (sources as Source[]) || [];
+
+      // Check if we have at least keywords OR sources
+      if (activeKeywords.length === 0 && activeSources.length === 0) {
         toast({
-          title: 'Aucune source',
-          description: 'Ajoutez des sources dans les paramètres pour commencer.',
+          title: 'Configuration requise',
+          description: 'Ajoutez des mots-clés ou des sources dans les paramètres pour commencer.',
           variant: 'destructive',
         });
         setRefreshing(false);
         return;
       }
 
-      // Fetch keywords
-      const { data: keywords } = await supabase
-        .from('keywords')
-        .select('*')
-        .eq('is_active', true);
-
       let totalArticles = 0;
 
-      for (const source of sources as Source[]) {
+      // STRATEGY 1: Search directly with keywords (preferred - no paywall)
+      for (const keyword of activeKeywords) {
+        try {
+          // Search for recent articles with keyword, prioritizing free content
+          const searchQuery = `${keyword.keyword} actualités article gratuit -paywall`;
+          const response = await firecrawlApi.search(searchQuery, {
+            limit: 5,
+            lang: 'fr',
+            country: 'FR',
+            tbs: 'qdr:w', // Last week
+          });
+
+          if (response.success && response.data) {
+            const results = response.data || [];
+            
+            for (const result of results) {
+              // Skip paywalled content indicators
+              if (
+                result.title?.toLowerCase().includes('abonnez-vous') ||
+                result.title?.toLowerCase().includes('subscribe') ||
+                result.markdown?.includes('paywall') ||
+                result.markdown?.includes('réservé aux abonnés')
+              ) {
+                continue;
+              }
+
+              const summary = result.markdown 
+                ? result.markdown.substring(0, 300).replace(/[#*\[\]]/g, '').trim() + '...'
+                : result.description || '';
+
+              const { error } = await supabase.from('articles').insert({
+                user_id: user.id,
+                source_id: null,
+                title: result.title || 'Article sans titre',
+                summary: summary,
+                source_url: result.url,
+                category: 'other',
+              });
+
+              if (!error) totalArticles++;
+            }
+          }
+        } catch (err) {
+          console.error(`Error searching keyword "${keyword.keyword}":`, err);
+        }
+      }
+
+      // STRATEGY 2: Scrape configured sources (if any)
+      for (const source of activeSources) {
         try {
           const response = await firecrawlApi.scrape(source.url);
 
@@ -107,7 +158,7 @@ export const useArticles = () => {
             const extractedArticles = extractArticlesFromMarkdown(markdown, source.url);
 
             // Filter by keywords if any
-            const keywordList = (keywords as Keyword[] || []).map((k) => k.keyword.toLowerCase());
+            const keywordList = activeKeywords.map((k) => k.keyword.toLowerCase());
             const filteredArticles = keywordList.length > 0
               ? extractedArticles.filter((a) =>
                   keywordList.some((kw) => a.title.toLowerCase().includes(kw))
