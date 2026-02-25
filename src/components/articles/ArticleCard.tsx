@@ -2,7 +2,7 @@ import { Article, CATEGORY_LABELS, CATEGORY_COLORS } from '@/types/database';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ExternalLink, Star, Check, Clock } from 'lucide-react';
+import { ExternalLink, Star, Check, Clock, Trash2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -10,9 +10,10 @@ interface ArticleCardProps {
   article: Article;
   onToggleFavorite: (id: string) => void;
   onToggleRead: (id: string) => void;
+  onDelete: (id: string) => void;
 }
 
-export const ArticleCard = ({ article, onToggleFavorite, onToggleRead }: ArticleCardProps) => {
+export const ArticleCard = ({ article, onToggleFavorite, onToggleRead, onDelete }: ArticleCardProps) => {
   const timeAgo = formatDistanceToNow(new Date(article.scraped_at), {
     addSuffix: true,
     locale: fr,
@@ -60,6 +61,14 @@ export const ArticleCard = ({ article, onToggleFavorite, onToggleRead }: Article
               onClick={() => onToggleRead(article.id)}
             >
               <Check className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+              onClick={() => onDelete(article.id)}
+            >
+              <Trash2 className="w-4 h-4" />
             </Button>
           </div>
         </div>

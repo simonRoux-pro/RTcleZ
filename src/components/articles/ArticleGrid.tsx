@@ -10,10 +10,11 @@ interface ArticleGridProps {
   articles: Article[];
   onToggleFavorite: (id: string) => void;
   onToggleRead: (id: string) => void;
+  onDelete: (id: string) => void;
   loading: boolean;
 }
 
-export const ArticleGrid = ({ articles, onToggleFavorite, onToggleRead, loading }: ArticleGridProps) => {
+export const ArticleGrid = ({ articles, onToggleFavorite, onToggleRead, onDelete, loading }: ArticleGridProps) => {
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<ArticleCategory | 'all'>('all');
   const [showFavorites, setShowFavorites] = useState(false);
@@ -87,6 +88,7 @@ export const ArticleGrid = ({ articles, onToggleFavorite, onToggleRead, loading 
               article={article}
               onToggleFavorite={onToggleFavorite}
               onToggleRead={onToggleRead}
+              onDelete={onDelete}
             />
           ))}
         </div>

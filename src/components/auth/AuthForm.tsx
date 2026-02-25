@@ -64,6 +64,7 @@ export const AuthForm = () => {
                 <Input
                   id="displayName"
                   type="text"
+                  autoComplete="name"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   placeholder="Votre nom"
@@ -76,6 +77,7 @@ export const AuthForm = () => {
               <Input
                 id="email"
                 type="email"
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="vous@example.com"
@@ -88,6 +90,7 @@ export const AuthForm = () => {
               <Input
                 id="password"
                 type="password"
+                autoComplete={isLogin ? "current-password" : "new-password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
