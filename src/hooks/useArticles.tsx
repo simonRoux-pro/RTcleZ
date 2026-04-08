@@ -33,6 +33,26 @@ export const useArticles = () => {
     fetchArticles();
   }, [fetchArticles]);
 
+  const cleanMarkdown = (text: string): string => {
+    return text
+      .replace(/!\[.*?\]\(.*?\)/g, '')            // remove images ![alt](url)
+      .replace(/!\(https?:\/\/[^)]+\)/g, '')       // remove !(url)
+      .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')    // [text](url) → text
+      .replace(/^#+\s*/gm, '')                     // remove # headings
+      .replace(/\*{1,3}([^*\n]+)\*{1,3}/g, '$1')  // remove bold/italic
+      .replace(/_{1,3}([^_\n]+)_{1,3}/g, '$1')    // remove underline
+      .replace(/`[^`]+`/g, '')                     // remove inline code
+      .replace(/\(https?:\/\/[^)]+\)/g, '')        // remove orphan (url)
+      .replace(/https?:\/\/\S+/g, '')              // remove standalone URLs
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 15)
+      .join(' ')
+      .replace(/\s+/g, ' ')
+      .substring(0, 250)
+      .trim();
+  };
+
   const extractArticlesFromMarkdown = (markdown: string, sourceUrl: string): { title: string; url: string }[] => {
     const articles: { title: string; url: string }[] = [];
     
@@ -155,9 +175,11 @@ export const useArticles = () => {
               continue;
             }
 
-            const summary = result.markdown 
-              ? result.markdown.substring(0, 300).replace(/[#*\[\]]/g, '').trim() + '...'
-              : result.description || '';
+            const summary = result.description?.trim()
+              ? result.description.trim().substring(0, 250)
+              : result.markdown
+                ? cleanMarkdown(result.markdown)
+                : '';
 
             const { error } = await supabase.from('articles').insert({
               user_id: user.id,
@@ -166,6 +188,7 @@ export const useArticles = () => {
               summary: summary,
               source_url: result.url,
               category: 'other',
+              keyword: keyword.keyword,
             });
 
             if (!error) totalArticles++;

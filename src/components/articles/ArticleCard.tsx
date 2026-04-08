@@ -36,8 +36,8 @@ export const ArticleCard = ({ article, onToggleFavorite, onToggleRead, onDelete 
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <div className="flex flex-wrap gap-2">
-            <Badge variant="secondary" className={`${CATEGORY_COLORS[article.category]} text-white text-xs`}>
-              {CATEGORY_LABELS[article.category]}
+            <Badge variant="secondary" className={`${article.keyword ? 'bg-violet-600' : CATEGORY_COLORS[article.category]} text-white text-xs`}>
+              {article.keyword || CATEGORY_LABELS[article.category]}
             </Badge>
             {article.source && (
               <Badge variant="outline" className="text-xs">
