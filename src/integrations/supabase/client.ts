@@ -5,13 +5,11 @@ import type { Database } from './types';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-console.log('🔍 Supabase Debug Info:');
-console.log('VITE_SUPABASE_URL:', SUPABASE_URL);
-console.log('VITE_SUPABASE_PUBLISHABLE_KEY:', SUPABASE_PUBLISHABLE_KEY?.substring(0, 20) + '...');
-
-if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-  console.error('❌ Missing Supabase environment variables!');
-}
+const fetchWithTimeout = (url: RequestInfo | URL, options: RequestInit = {}) => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 10000);
+  return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
+};
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
@@ -21,5 +19,8 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     storage: localStorage,
     persistSession: true,
     autoRefreshToken: true,
-  }
+  },
+  global: {
+    fetch: fetchWithTimeout,
+  },
 });
