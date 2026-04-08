@@ -37,7 +37,14 @@ export const useArticles = () => {
     } else {
       const banned = (bannedRes.data ?? []).map((r: { domain: string }) => r.domain);
       setBannedDomains(banned);
-      const filtered = (articlesRes.data as Article[]).filter(a => !banned.includes(getDomain(a.source_url)));
+      // deduplicate by source_url (keep newest)
+      const seen = new Set<string>();
+      const deduped = (articlesRes.data as Article[]).filter(a => {
+        if (seen.has(a.source_url)) return false;
+        seen.add(a.source_url);
+        return true;
+      });
+      const filtered = deduped.filter(a => !banned.includes(getDomain(a.source_url)));
       const scores = computeSourceScores(filtered);
       const sorted = [...filtered].sort((a, b) => {
         const diff = (scores[getDomain(b.source_url)] ?? 0) - (scores[getDomain(a.source_url)] ?? 0);
@@ -107,9 +114,21 @@ export const useArticles = () => {
     return articles.slice(0, 10); // Limit to 10 articles per source
   };
 
+  const purgeRead = async () => {
+    if (!user) return;
+    const { error } = await supabase.from('articles').delete().eq('user_id', user.id).eq('is_read', true);
+    if (!error) {
+      setArticles(prev => prev.filter(a => !a.is_read));
+      toast({ title: 'Purge effectuée', description: 'Les articles lus ont été supprimés.' });
+    }
+  };
+
   const refreshArticles = async () => {
     if (!user) return;
     setRefreshing(true);
+
+    // Collect existing URLs to skip duplicates on import
+    const existingUrls = new Set(articles.map(a => a.source_url));
 
     try {
       // Fetch active keywords
@@ -184,16 +203,18 @@ export const useArticles = () => {
           console.log('📄 Processing results:', results.length);
           
           for (const result of results) {
-            // Skip paywalled content or banned domains
+            // Skip paywalled, banned, or duplicate URLs
             if (
               result.title?.toLowerCase().includes('abonnez-vous') ||
               result.title?.toLowerCase().includes('subscribe') ||
               result.markdown?.includes('paywall') ||
               result.markdown?.includes('réservé aux abonnés') ||
-              (result.url && bannedDomains.includes(getDomain(result.url)))
+              (result.url && bannedDomains.includes(getDomain(result.url))) ||
+              (result.url && existingUrls.has(result.url))
             ) {
               continue;
             }
+            if (result.url) existingUrls.add(result.url);
 
             const summary = result.description?.trim()
               ? result.description.trim().substring(0, 250)
@@ -348,5 +369,6 @@ export const useArticles = () => {
     toggleRead,
     deleteArticle,
     banDomain,
+    purgeRead,
   };
 };

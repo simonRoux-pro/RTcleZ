@@ -7,7 +7,7 @@ import { useArticles } from '@/hooks/useArticles';
 
 export const Dashboard = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const { articles, loading, refreshing, sourceScores, refreshArticles, toggleFavorite, toggleRead, deleteArticle, banDomain } = useArticles();
+  const { articles, loading, refreshing, sourceScores, refreshArticles, toggleFavorite, toggleRead, deleteArticle, banDomain, purgeRead } = useArticles();
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -31,6 +31,7 @@ export const Dashboard = () => {
           onToggleRead={toggleRead}
           onDelete={deleteArticle}
           onBanSource={banDomain}
+          onPurgeRead={purgeRead}
           sourceScores={sourceScores}
           loading={loading}
         />

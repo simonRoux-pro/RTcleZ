@@ -22,23 +22,27 @@ export const ArticleCard = ({ article, onToggleFavorite, onToggleRead, onDelete,
     locale: fr,
   });
 
+  const openArticle = () => window.open(article.source_url, '_blank', 'noopener,noreferrer');
+  const stop = (e: React.MouseEvent) => e.stopPropagation();
+
   return (
-    <Card className={`card-hover overflow-hidden ${article.is_read ? 'opacity-60' : ''}`}>
+    <Card
+      className={`card-hover overflow-hidden cursor-pointer ${article.is_read ? 'opacity-60' : ''}`}
+      onClick={openArticle}
+    >
       {article.image_url && (
         <div className="aspect-video overflow-hidden">
           <img
             src={article.image_url}
             alt={article.title}
             className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-            onError={(e) => {
-              e.currentTarget.style.display = 'none';
-            }}
+            onError={(e) => { e.currentTarget.style.display = 'none'; }}
           />
         </div>
       )}
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2" onClick={stop}>
             <Badge variant="secondary" className={`${article.keyword ? 'bg-violet-600' : CATEGORY_COLORS[article.category]} text-white text-xs`}>
               {article.keyword || CATEGORY_LABELS[article.category]}
             </Badge>
@@ -48,7 +52,7 @@ export const ArticleCard = ({ article, onToggleFavorite, onToggleRead, onDelete,
               </Badge>
             )}
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1" onClick={stop}>
             {flameCount > 0 && (
               <span className="flex items-center gap-0.5 mr-1" title={`Score source : ${sourceScore}`}>
                 {Array.from({ length: flameCount }).map((_, i) => (
@@ -60,7 +64,7 @@ export const ArticleCard = ({ article, onToggleFavorite, onToggleRead, onDelete,
               variant="ghost"
               size="icon"
               className={`h-8 w-8 ${article.is_favorite ? 'text-yellow-500' : 'text-muted-foreground'}`}
-              onClick={() => onToggleFavorite(article.id)}
+              onClick={(e) => { stop(e); onToggleFavorite(article.id); }}
             >
               <Star className={`w-4 h-4 ${article.is_favorite ? 'fill-current' : ''}`} />
             </Button>
@@ -68,7 +72,7 @@ export const ArticleCard = ({ article, onToggleFavorite, onToggleRead, onDelete,
               variant="ghost"
               size="icon"
               className={`h-8 w-8 ${article.is_read ? 'text-primary' : 'text-muted-foreground'}`}
-              onClick={() => onToggleRead(article.id)}
+              onClick={(e) => { stop(e); onToggleRead(article.id); }}
             >
               <Check className="w-4 h-4" />
             </Button>
@@ -76,7 +80,7 @@ export const ArticleCard = ({ article, onToggleFavorite, onToggleRead, onDelete,
               variant="ghost"
               size="icon"
               className="h-8 w-8 text-muted-foreground hover:text-destructive"
-              onClick={() => onDelete(article.id)}
+              onClick={(e) => { stop(e); onDelete(article.id); }}
             >
               <Trash2 className="w-4 h-4" />
             </Button>
@@ -85,7 +89,7 @@ export const ArticleCard = ({ article, onToggleFavorite, onToggleRead, onDelete,
               size="icon"
               className="h-8 w-8 text-muted-foreground hover:text-orange-600"
               title={`Bannir ${getDomain(article.source_url)}`}
-              onClick={() => onBanSource(article.source_url)}
+              onClick={(e) => { stop(e); onBanSource(article.source_url); }}
             >
               <Ban className="w-4 h-4" />
             </Button>
@@ -101,17 +105,12 @@ export const ArticleCard = ({ article, onToggleFavorite, onToggleRead, onDelete,
             {article.summary}
           </p>
         )}
-        <div className="flex items-center justify-between pt-2">
+        <div className="flex items-center justify-between pt-2" onClick={stop}>
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
             <Clock className="w-3 h-3" />
             <span>{timeAgo}</span>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            asChild
-            className="gap-2"
-          >
+          <Button variant="outline" size="sm" asChild className="gap-2">
             <a href={article.source_url} target="_blank" rel="noopener noreferrer">
               <ExternalLink className="w-3 h-3" />
               Lire

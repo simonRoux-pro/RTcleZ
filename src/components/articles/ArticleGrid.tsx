@@ -3,7 +3,7 @@ import { ArticleCard } from './ArticleCard';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Filter, Star } from 'lucide-react';
+import { Search, Filter, Star, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 interface ArticleGridProps {
@@ -12,11 +12,12 @@ interface ArticleGridProps {
   onToggleRead: (id: string) => void;
   onDelete: (id: string) => void;
   onBanSource: (sourceUrl: string) => void;
+  onPurgeRead: () => void;
   sourceScores: Record<string, number>;
   loading: boolean;
 }
 
-export const ArticleGrid = ({ articles, onToggleFavorite, onToggleRead, onDelete, onBanSource, sourceScores, loading }: ArticleGridProps) => {
+export const ArticleGrid = ({ articles, onToggleFavorite, onToggleRead, onDelete, onBanSource, onPurgeRead, sourceScores, loading }: ArticleGridProps) => {
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<ArticleCategory | 'all'>('all');
   const [showFavorites, setShowFavorites] = useState(false);
@@ -71,6 +72,17 @@ export const ArticleGrid = ({ articles, onToggleFavorite, onToggleRead, onDelete
           >
             <Star className={`w-4 h-4 ${showFavorites ? 'fill-current' : ''}`} />
           </Button>
+          {articles.some(a => a.is_read) && (
+            <Button
+              variant="outline"
+              size="icon"
+              title="Supprimer les articles lus"
+              onClick={onPurgeRead}
+              className="text-muted-foreground hover:text-destructive"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          )}
         </div>
       </div>
 
