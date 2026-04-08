@@ -50,7 +50,7 @@ export const getDomain = (url: string): string => {
   }
 };
 
-: Record<ArticleCategory, string> = {
+export const CATEGORY_LABELS: Record<ArticleCategory, string> = {
   tech: 'Tech',
   business: 'Business',
   science: 'Science',
