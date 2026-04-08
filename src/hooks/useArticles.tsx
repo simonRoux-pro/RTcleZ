@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Article, Source, Keyword } from '@/types/database';
+import { Article, Source, Keyword, getDomain } from '@/types/database';
 import { firecrawlApi } from '@/lib/api/firecrawl';
 import { useToast } from '@/hooks/use-toast';
 
@@ -9,22 +9,41 @@ export const useArticles = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [articles, setArticles] = useState<Article[]>([]);
+  const [bannedDomains, setBannedDomains] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  const computeSourceScores = (arts: Article[]): Record<string, number> => {
+    const scores: Record<string, number> = {};
+    for (const a of arts) {
+      const d = getDomain(a.source_url);
+      if (!scores[d]) scores[d] = 0;
+      if (a.is_read) scores[d] += 1;
+      if (a.is_favorite) scores[d] += 3;
+    }
+    return scores;
+  };
 
   const fetchArticles = useCallback(async () => {
     if (!user) return;
 
-    const { data, error } = await supabase
-      .from('articles')
-      .select('*, source:sources(*)')
-      .order('scraped_at', { ascending: false })
-      .limit(50);
+    const [articlesRes, bannedRes] = await Promise.all([
+      supabase.from('articles').select('*, source:sources(*)').order('scraped_at', { ascending: false }).limit(100),
+      supabase.from('banned_domains').select('domain').eq('user_id', user.id),
+    ]);
 
-    if (error) {
-      toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
+    if (articlesRes.error) {
+      toast({ title: 'Erreur', description: articlesRes.error.message, variant: 'destructive' });
     } else {
-      setArticles(data as Article[]);
+      const banned = (bannedRes.data ?? []).map((r: { domain: string }) => r.domain);
+      setBannedDomains(banned);
+      const filtered = (articlesRes.data as Article[]).filter(a => !banned.includes(getDomain(a.source_url)));
+      const scores = computeSourceScores(filtered);
+      const sorted = [...filtered].sort((a, b) => {
+        const diff = (scores[getDomain(b.source_url)] ?? 0) - (scores[getDomain(a.source_url)] ?? 0);
+        return diff !== 0 ? diff : new Date(b.scraped_at).getTime() - new Date(a.scraped_at).getTime();
+      });
+      setArticles(sorted);
     }
     setLoading(false);
   }, [user, toast]);
@@ -165,12 +184,13 @@ export const useArticles = () => {
           console.log('📄 Processing results:', results.length);
           
           for (const result of results) {
-            // Skip paywalled content indicators
+            // Skip paywalled content or banned domains
             if (
               result.title?.toLowerCase().includes('abonnez-vous') ||
               result.title?.toLowerCase().includes('subscribe') ||
               result.markdown?.includes('paywall') ||
-              result.markdown?.includes('réservé aux abonnés')
+              result.markdown?.includes('réservé aux abonnés') ||
+              (result.url && bannedDomains.includes(getDomain(result.url)))
             ) {
               continue;
             }
@@ -284,6 +304,17 @@ export const useArticles = () => {
     }
   };
 
+  const banDomain = async (sourceUrl: string) => {
+    if (!user) return;
+    const domain = getDomain(sourceUrl);
+    const { error } = await supabase.from('banned_domains').insert({ user_id: user.id, domain });
+    if (!error) {
+      setBannedDomains(prev => [...prev, domain]);
+      setArticles(prev => prev.filter(a => getDomain(a.source_url) !== domain));
+      toast({ title: 'Source bannie', description: `Articles de "${domain}" masqués.` });
+    }
+  };
+
   const deleteArticle = async (id: string) => {
     const { error } = await supabase
       .from('articles')
@@ -305,13 +336,17 @@ export const useArticles = () => {
     }
   };
 
+  const sourceScores = computeSourceScores(articles);
+
   return {
     articles,
     loading,
     refreshing,
+    sourceScores,
     refreshArticles,
     toggleFavorite,
     toggleRead,
     deleteArticle,
+    banDomain,
   };
 };

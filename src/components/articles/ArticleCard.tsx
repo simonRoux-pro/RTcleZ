@@ -1,8 +1,8 @@
-import { Article, CATEGORY_LABELS, CATEGORY_COLORS } from '@/types/database';
+import { Article, CATEGORY_LABELS, CATEGORY_COLORS, getDomain } from '@/types/database';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ExternalLink, Star, Check, Clock, Trash2 } from 'lucide-react';
+import { ExternalLink, Star, Check, Clock, Trash2, Ban, Flame } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -11,9 +11,12 @@ interface ArticleCardProps {
   onToggleFavorite: (id: string) => void;
   onToggleRead: (id: string) => void;
   onDelete: (id: string) => void;
+  onBanSource: (sourceUrl: string) => void;
+  sourceScore: number;
 }
 
-export const ArticleCard = ({ article, onToggleFavorite, onToggleRead, onDelete }: ArticleCardProps) => {
+export const ArticleCard = ({ article, onToggleFavorite, onToggleRead, onDelete, onBanSource, sourceScore }: ArticleCardProps) => {
+  const flameCount = sourceScore >= 6 ? 3 : sourceScore >= 3 ? 2 : sourceScore >= 1 ? 1 : 0;
   const timeAgo = formatDistanceToNow(new Date(article.scraped_at), {
     addSuffix: true,
     locale: fr,
@@ -46,6 +49,13 @@ export const ArticleCard = ({ article, onToggleFavorite, onToggleRead, onDelete 
             )}
           </div>
           <div className="flex items-center gap-1">
+            {flameCount > 0 && (
+              <span className="flex items-center gap-0.5 mr-1" title={`Score source : ${sourceScore}`}>
+                {Array.from({ length: flameCount }).map((_, i) => (
+                  <Flame key={i} className="w-3 h-3 text-orange-400 fill-orange-400" />
+                ))}
+              </span>
+            )}
             <Button
               variant="ghost"
               size="icon"
@@ -69,6 +79,15 @@ export const ArticleCard = ({ article, onToggleFavorite, onToggleRead, onDelete 
               onClick={() => onDelete(article.id)}
             >
               <Trash2 className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-orange-600"
+              title={`Bannir ${getDomain(article.source_url)}`}
+              onClick={() => onBanSource(article.source_url)}
+            >
+              <Ban className="w-4 h-4" />
             </Button>
           </div>
         </div>

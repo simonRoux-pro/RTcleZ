@@ -1,4 +1,4 @@
-import { Article, ArticleCategory, CATEGORY_LABELS } from '@/types/database';
+import { Article, ArticleCategory, CATEGORY_LABELS, getDomain } from '@/types/database';
 import { ArticleCard } from './ArticleCard';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
@@ -11,10 +11,12 @@ interface ArticleGridProps {
   onToggleFavorite: (id: string) => void;
   onToggleRead: (id: string) => void;
   onDelete: (id: string) => void;
+  onBanSource: (sourceUrl: string) => void;
+  sourceScores: Record<string, number>;
   loading: boolean;
 }
 
-export const ArticleGrid = ({ articles, onToggleFavorite, onToggleRead, onDelete, loading }: ArticleGridProps) => {
+export const ArticleGrid = ({ articles, onToggleFavorite, onToggleRead, onDelete, onBanSource, sourceScores, loading }: ArticleGridProps) => {
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<ArticleCategory | 'all'>('all');
   const [showFavorites, setShowFavorites] = useState(false);
@@ -89,6 +91,8 @@ export const ArticleGrid = ({ articles, onToggleFavorite, onToggleRead, onDelete
               onToggleFavorite={onToggleFavorite}
               onToggleRead={onToggleRead}
               onDelete={onDelete}
+              onBanSource={onBanSource}
+              sourceScore={sourceScores[getDomain(article.source_url)] ?? 0}
             />
           ))}
         </div>

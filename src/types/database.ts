@@ -35,7 +35,22 @@ export interface Article {
   source?: Source;
 }
 
-export const CATEGORY_LABELS: Record<ArticleCategory, string> = {
+export interface BannedDomain {
+  id: string;
+  user_id: string;
+  domain: string;
+  created_at: string;
+}
+
+export const getDomain = (url: string): string => {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return url;
+  }
+};
+
+: Record<ArticleCategory, string> = {
   tech: 'Tech',
   business: 'Business',
   science: 'Science',
