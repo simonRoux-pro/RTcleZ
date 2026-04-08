@@ -28,6 +28,7 @@ export interface Article {
   image_url: string | null;
   source_url: string;
   category: ArticleCategory;
+  keyword: string | null;
   scraped_at: string;
   is_read: boolean;
   is_favorite: boolean;

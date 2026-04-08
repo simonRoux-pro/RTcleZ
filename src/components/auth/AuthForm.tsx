@@ -25,9 +25,12 @@ export const AuthForm = () => {
       : await signUp(email, password, displayName);
 
     if (error) {
+      const message = error.message?.includes('fetch')
+        ? 'Impossible de contacter le serveur. Vérifiez votre connexion ou réessayez dans quelques instants.'
+        : error.message;
       toast({
         title: 'Erreur',
-        description: error.message,
+        description: message,
         variant: 'destructive',
       });
     } else if (!isLogin) {
